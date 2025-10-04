@@ -1,6 +1,7 @@
 from flask_restx import Namespace, Resource, fields
 from flask import request, url_for
 from app.tasks.simulation_tasks import run_full_simulation_task
+from app import celery_app as _celery_app
 
 ns = Namespace("simulate", description="Simulation endpoints")
 
@@ -43,11 +44,14 @@ class StartSimulation(Resource):
     @ns.marshal_with(start_response)
     def post(self):
         params = request.get_json(force=True)
-        task = run_full_simulation_task.delay(params)
-        return {
-            "task_id": task.id,
-            "status_url": url_for("api_v1.simulation_status", task_id=task.id, _external=False),
-        }
+        # Prefer sending via the configured Celery app to avoid mis-bound shared_task
+        if _celery_app is None:
+            task = run_full_simulation_task.apply_async(args=[params])
+        else:
+            task = _celery_app.send_task(
+                "app.tasks.simulation_tasks.run_full_simulation_task", args=[params]
+            )
+        return {"task_id": task.id, "status_url": f"/api/v1/simulate/status/{task.id}"}
 
 
 @ns.route("/status/<string:task_id>")

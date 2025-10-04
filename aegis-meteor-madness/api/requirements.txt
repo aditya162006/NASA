@@ -6,10 +6,12 @@ alembic==1.13.3
 psycopg2-binary==2.9.9
 redis==5.0.8
 celery==5.4.0
+gunicorn==22.0.0
 python-dotenv==1.0.1
 requests==2.32.3
 pydantic==2.9.2
 numpy==2.1.2
-rasterio==1.3.10
-geopandas==1.0.1
-shapely==2.0.6
+# Geospatial deps are heavy; enable later when needed
+# rasterio==1.3.10
+# geopandas==1.0.1
+# shapely==2.0.6

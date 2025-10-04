@@ -1,0 +1,41 @@
+version: '3.9'
+services:
+  api:
+    build: ./api
+    env_file:
+      - ./api/.env
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - '8000:8000'
+  worker:
+    build: ./api
+    command: ["celery", "-A", "app.celery_app", "worker", "-l", "info"]
+    env_file:
+      - ./api/.env
+    depends_on:
+      - redis
+      - postgres
+  client:
+    build: ./client
+    ports:
+      - '5173:80'
+    depends_on:
+      - api
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aegis
+      POSTGRES_PASSWORD: aegis
+      POSTGRES_DB: aegis
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+volumes:
+  pgdata:
